@@ -77,6 +77,12 @@ const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelecto
 
 function init(){
  try{
+  // O botão de geração é ligado primeiro, antes de qualquer rotina opcional.
+  // Isso impede que um erro em um campo secundário impeça a geração do PDF.
+  const generateBtn=document.getElementById("generateButton");
+  if(generateBtn){
+    generateBtn.addEventListener("click", generatePdf);
+  }
   Object.keys(COURSES).forEach(v=>$("#courseName").add(new Option(v,v)));
   Object.keys(PLANS).forEach(v=>$("#planName").add(new Option(v,v)));
   setDefaults();applyCourse();applyPlan();setTrialDefaults();setSpecialDefaults();updateSummary();
@@ -101,12 +107,10 @@ function init(){
   $("#trankDate").addEventListener("change",syncTrankDates);
   $("#scholarOriginal").addEventListener("input",syncScholarship);
   $("#scholarPercent").addEventListener("input",syncScholarship);
-  $("#scholarInstallments").addEventListener("input",syncScholarship);
+  $("#scholarFinal").addEventListener("input",()=>{ const final=Math.max(0,+$("#scholarFinal").value||0); const n=Math.max(1,+$("#scholarInstallments").value||1); $("#scholarPart").value=(final/n).toFixed(2); });
+  $("#scholarInstallments").addEventListener("input",()=>{ const final=Math.max(0,+$("#scholarFinal").value||0); const n=Math.max(1,+$("#scholarInstallments").value||1); $("#scholarPart").value=(final/n).toFixed(2); });
   $("#scholarType").addEventListener("change",syncScholarship);
   $$('[data-mask]').forEach(i=>i.addEventListener("input",applyMask));
-  form.onsubmit=generatePdf;
-  // O botão de geração é explicitamente controlado para impedir qualquer navegação/reload do formulário.
-  $("#generateButton").onclick=generatePdf;
  }catch(err){console.error("Falha ao inicializar Gestão de Contratos:",err)}
 }
 function isSpecial(model=selectedModel){return SPECIAL_MODELS.has(model)}
@@ -118,7 +122,16 @@ function setSpecialDefaults(){
 }
 function toggleEjaStudent2(){const show=$("#ejaStudentCount")?.value==="2";$("#ejaStudent2Block").hidden=!show;[...$("#ejaStudent2Block").querySelectorAll("input,select")].forEach(i=>i.required=show && i.name==="eja2Name");}
 function syncTrankDates(){const v=$("#trankDate")?.value;if(!v)return;const base=localDate(v);const a=new Date(base),b=new Date(base),c=new Date(base);a.setMonth(a.getMonth()+3);b.setMonth(b.getMonth()+12);c.setFullYear(c.getFullYear()+1);$("#trankReturn").value=dateInput(a);$("#trankMax").value=dateInput(b);$("#trankValidity").value=dateInput(c)}
-function syncScholarship(){const o=+$("#scholarOriginal")?.value||0;let p=Math.min(100,Math.max(0,+$("#scholarPercent")?.value||0));if($("#scholarType")?.value==="integral"){p=100;$("#scholarPercent").value="100"}const n=Math.max(1,+$("#scholarInstallments")?.value||1);const final=o*(1-p/100);$("#scholarFinal").value=final.toFixed(2);$("#scholarPart").value=(final/n).toFixed(2);}
+function syncScholarship(){
+ const original=Math.max(0,+$("#scholarOriginal")?.value||0);
+ let percent=Math.min(100,Math.max(0,+$("#scholarPercent")?.value||0));
+ if($("#scholarType")?.value==="integral"){percent=100;$("#scholarPercent").value="100";}
+ const installments=Math.max(1,+$("#scholarInstallments")?.value||1);
+ const final=original*(1-percent/100);
+ const finalEl=$("#scholarFinal"), partEl=$("#scholarPart");
+ if(finalEl) finalEl.value=final.toFixed(2);
+ if(partEl) partEl.value=(final/installments).toFixed(2);
+}
 function openForm(model){
  selectedModel=model;currentStep=1;$("#startScreen").classList.remove("active");$("#formScreen").classList.add("active");
  const a=model==="academy",t=model==="trial",sp=isSpecial(model);
@@ -154,7 +167,32 @@ function getData(){
  if($("#samePayer")?.checked)["Name","Birth","Profession","Rg","Cpf","Phone","Address","District","Cep","City"].forEach(k=>d["payer"+k]=d["student"+k]||"");
  return d;
 }
-async function generatePdf(e){if(e&&typeof e.preventDefault==="function")e.preventDefault();if(!validateStep())return;const b=$("#generateButton");if(b.disabled)return;b.disabled=true;b.textContent="Gerando PDF…";try{const d=getData();await generateContractFromTemplate(d,selectedModel);toast("PDF gerado com sucesso.")}catch(err){console.error("Erro ao gerar PDF:",err);toast("Não foi possível gerar o PDF. Verifique o console para detalhes.")}finally{b.disabled=false;b.innerHTML='Gerar PDF <span>↓</span>'}}
+async function generatePdf(e){
+ if(e&&typeof e.preventDefault==="function")e.preventDefault();
+ if(e&&typeof e.stopPropagation==="function")e.stopPropagation();
+ const b=$("#generateButton");
+ if(!b)return false;
+ if(b.dataset.busy==="1")return false;
+ if(!validateStep())return false;
+ b.dataset.busy="1"; b.disabled=true; b.innerHTML="Gerando PDF…";
+ try{
+   if(typeof window.generateContractFromTemplate!=="function")throw new Error("O módulo de PDF não foi carregado. Faça Ctrl+F5 e tente novamente.");
+   if(typeof PDFLib==="undefined")throw new Error("A biblioteca PDF não foi carregada. Verifique a conexão com a internet.");
+   const d=getData();
+   await window.generateContractFromTemplate(d,selectedModel);
+   toast("PDF gerado com sucesso. Verifique seus downloads.");
+   return true;
+ }catch(err){
+   console.error("Erro ao gerar PDF:",err);
+   const msg=err&&err.message?err.message:String(err);
+   toast("Erro ao gerar PDF: "+msg);
+   alert("Não foi possível gerar o PDF.\n\n"+msg);
+   return false;
+ }finally{
+   b.dataset.busy="0"; b.disabled=false; b.innerHTML='Gerar PDF <span>↓</span>';
+ }
+}
+window.generatePdf=generatePdf;
 function courseInfo(d){return `<table class="pdf-table pdf-plan-table"><tr><th>Curso</th><th>Carga horária</th><th>Início</th><th>Término</th></tr><tr><td>${esc(d.courseName)}</td><td>${esc(d.workload)} horas</td><td>${brDate(d.courseStart)}</td><td>${brDate(d.courseEnd)}</td></tr><tr><td>${esc(d.courseMode)}</td><td colspan="3" class="content"><b>Módulos:</b> ${lines(d.modules).join("; ")}</td></tr><tr><th colspan="4">Dias e horários contratados</th></tr><tr><td colspan="4">${esc(d.schedule)}</td></tr></table>`}
 function academyInfo(d){return `<table class="pdf-table pdf-plan-table"><tr><th>Plano</th><th>Usuários</th><th>Início da assinatura</th><th>Término da assinatura</th></tr><tr><td>${esc(d.planName)}</td><td>${esc(d.planUsers)}</td><td>${brDate(d.subscriptionStart)}</td><td>${brDate(d.subscriptionEnd)}</td></tr><tr><td>Acesso 100% online</td><td colspan="3" class="content"><b>Cursos:</b> ${lines(d.planCourses).join("; ")}</td></tr><tr><th colspan="4">Acesso</th></tr><tr><td colspan="4">Todos os dias, em horário livre.</td></tr></table>`}
 function installmentTable(d,total){const n=Math.max(1,+d.installments||1),v=total/n,dates=dueDates(d.firstDue,n,+d.dueDay||10);return `<table class="pdf-table"><tr><th>Nº</th><th>Vencimento</th><th>Valor</th><th>Desconto</th><th>Multa</th><th>Juros/mês</th></tr>${dates.map((x,i)=>`<tr><td>${i+1}</td><td>${brDate(x)}</td><td>${money(v)}</td><td>${money(d.discount||0)}</td><td>2%</td><td>1%</td></tr>`).join("")}</table>`}

@@ -31,6 +31,8 @@ async function generateContractFromTemplate(d,model){
 }
 
 
+window.generateContractFromTemplate=generateContractFromTemplate;
+
 function fillEja(c,d){
   const p1=c.pages[0], p4=c.pages[3], p2=c.pages[1];
   const one={name:d.eja1Name, birth:d.eja1Birth, civil:d.eja1Civil, gender:(d.eja1Gender||"").slice(0,1), profession:d.eja1Profession,address:d.eja1Address,district:d.eja1District,cep:d.eja1Cep,city:d.eja1City,state:d.eja1State,email:d.eja1Email,rg:d.eja1Rg,cpf:d.eja1Cpf,phone:d.eja1Phone};
