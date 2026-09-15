@@ -34,34 +34,101 @@ async function generateContractFromTemplate(d,model){
 window.generateContractFromTemplate=generateContractFromTemplate;
 
 function fillEja(c,d){
-  const p1=c.pages[0], p4=c.pages[3], p2=c.pages[1];
-  const one={name:d.eja1Name, birth:d.eja1Birth, civil:d.eja1Civil, gender:(d.eja1Gender||"").slice(0,1), profession:d.eja1Profession,address:d.eja1Address,district:d.eja1District,cep:d.eja1Cep,city:d.eja1City,state:d.eja1State,email:d.eja1Email,rg:d.eja1Rg,cpf:d.eja1Cpf,phone:d.eja1Phone};
-  const two={name:d.eja2Name, birth:d.eja2Birth, civil:d.eja2Civil, gender:(d.eja2Gender||"").slice(0,1), profession:d.eja2Profession,address:d.eja2Address,district:d.eja2District,cep:d.eja2Cep,city:d.eja2City,state:d.eja2State,email:d.eja2Email,rg:d.eja2Rg,cpf:d.eja2Cpf,phone:d.eja2Phone};
-  function student(page,v,top){
-    field(page,v.name,61,top,285,26,8.1,c);field(page,brDate(v.birth),348,top,86,26,7.5,c);field(page,v.civil,436,top,119,26,7.3,c,{align:"center"});field(page,v.gender,558,top,32,26,8,c,{align:"center"});
-    field(page,v.profession,61,top+32,123,25,7.1,c);field(page,v.address,161,top+32,393,25,7.1,c);
-    field(page,v.district,61,top+64,123,37,7,c);field(page,v.cep,161,top+64,74,37,7,c);field(page,v.city,235,top+64,145,37,7,c,{align:"center"});field(page,v.state,380,top+64,35,37,7.5,c,{align:"center"});field(page,v.email,405,top+64,149,37,6.1,c);
-    field(page,v.rg,61,top+105,198,25,7,c);field(page,v.cpf,259,top+105,146,25,7,c);field(page,v.phone,405,top+105,149,25,7,c);
-  }
-  // White over the original filled values while keeping the official table/labels.
-  student(p1,one,197);
+  const p1=c.pages[0], p2=c.pages[1], p4=c.pages[3];
+  const one={name:d.eja1Name||"", birth:d.eja1Birth||"", civil:d.eja1Civil||"", gender:(d.eja1Gender||"").slice(0,1), profession:d.eja1Profession||"", address:d.eja1Address||"", district:d.eja1District||"", cep:d.eja1Cep||"", city:d.eja1City||"", state:d.eja1State||"", email:d.eja1Email||"", rg:d.eja1Rg||"", cpf:d.eja1Cpf||"", phone:d.eja1Phone||""};
+  const two={name:d.eja2Name||"", birth:d.eja2Birth||"", civil:d.eja2Civil||"", gender:(d.eja2Gender||"").slice(0,1), profession:d.eja2Profession||"", address:d.eja2Address||"", district:d.eja2District||"", cep:d.eja2Cep||"", city:d.eja2City||"", state:d.eja2State||"", email:d.eja2Email||"", rg:d.eja2Rg||"", cpf:d.eja2Cpf||"", phone:d.eja2Phone||""};
   const show2=d.ejaStudentCount==="2";
-  student(p1,show2?two:{},384);
-  // Provider block in the original template, keeping clause wording intact.
+
+  // O PDF original já contém exemplos preenchidos. Apagamos somente os valores,
+  // preservando banner, tabelas, bordas, rótulos e todo o texto jurídico.
+  function value(page,text,x,top,w,size=12,opt={}){
+    coverA4(page,x,top,w,opt.h||16,c);
+    if(opt.center)drawCenteredA4(page,text,x,top+1,w,size,c.bold,c);
+    else drawFittedA4(page,text,x+2,top+1,w-4,size,c.bold,c);
+  }
+  function student(page,v,y,second=false){
+    if(!second){
+      value(page,v.name,39,y+22,195,11.5);
+      value(page,brDate(v.birth),324,y+30,62,11.2);
+      value(page,v.civil,406,y+30,61,11.2,{h:17});
+      value(page,v.gender,527,y+22,35,11.5,{center:true});
+      value(page,v.profession,40,y+61,120,10.5);
+      value(page,v.address,163,y+61,276,10.5);
+      value(page,v.district,40,y+108,120,11.2);
+      value(page,v.cep,164,y+108,61,11.2);
+      value(page,v.city,236,y+108,142,11.2,{center:true});
+      value(page,v.state,378,y+93,24,11.2,{center:true});
+      value(page,v.email,406,y+103,153,9.2,{h:34});
+      value(page,v.rg,39,y+143,194,11.2);
+      value(page,v.cpf,236,y+143,141,11.2);
+      value(page,v.phone,378,y+143,181,11.2);
+    }else{
+      value(page,v.name,39,y+22,195,11.5);
+      value(page,brDate(v.birth),324,y+30,62,11.2);
+      value(page,v.civil,406,y+30,61,11.2,{h:17});
+      value(page,v.gender,527,y+22,35,11.5,{center:true});
+      value(page,v.profession,40,y+61,120,10.5);
+      value(page,v.address,163,y+61,276,10.5);
+      value(page,v.district,40,y+115,120,11.2);
+      value(page,v.cep,164,y+115,61,11.2);
+      value(page,v.city,236,y+115,142,11.2,{center:true});
+      value(page,v.state,378,y+100,24,11.2,{center:true});
+      value(page,v.email,406,y+111,153,9.2,{h:34});
+      value(page,v.rg,39,y+166,194,11.2);
+      value(page,v.cpf,236,y+166,141,11.2);
+      value(page,v.phone,378,y+166,181,11.2);
+    }
+  }
+
+  // Coordenadas medidas diretamente do modelo A4 (595 x 842).
+  student(p1,one,198,false);
+  if(show2) student(p1,two,394,true);
+  else student(p1,{name:"",birth:"",civil:"",gender:"",profession:"",address:"",district:"",cep:"",city:"",state:"",email:"",rg:"",cpf:"",phone:""},394,true);
+
+  // Instituição parceira: área exata da cláusula 3.1.
   const pr=d.ejaProviderData||{};
-  cover(p2,110,326,445,92,c);
-  drawWrapped(p2,`RAZÃO SOCIAL: ${pr.legal||""}`,61,326,490,8.1,10.5,c.bold,c);
-  drawWrapped(p2,`NOME FANTASIA: ${pr.fantasy||""}`,61,348,490,8.1,10.5,c.bold,c);
-  drawWrapped(p2,`CNPJ: ${pr.cnpj||""}`,61,370,490,8.1,10.5,c.bold,c);
-  drawWrapped(p2,`ENDEREÇO: ${pr.address||""}`,61,392,490,7.5,9.8,c.font,c);
-  drawWrapped(p2,`CONTATO: ${pr.contact||""}`,61,411,490,7.5,9.8,c.font,c);
-  // The source has a static declaration date. Replace it with the generation date.
-  cover(p4,55,238,485,22,c);drawCentered(p4,`Mirassol D’Oeste/MT, ${longDate(new Date())}`,55,239,485,8.5,c.font,c);
-  cover(p4,115,286,375,78,c);
-  drawCentered(p4,"Evolua+ Profissões-Valéria Da Silva Moura",115,291,375,8,c.bold,c);
-  drawCentered(p4,one.name||"",115,337,375,8,c.bold,c);
-  if(show2)drawCentered(p4,two.name||"",115,382,375,8,c.bold,c);
-  else {cover(p4,115,370,375,35,c);}
+  coverA4(p2,35,319,500,92,c);
+  drawWrappedA4(p2,`RAZÃO SOCIAL: ${pr.legal||""}`,37,321,500,10.8,12.5,c.bold,c);
+  drawWrappedA4(p2,`NOME FANTASIA: ${pr.fantasy||""}`,37,347,500,10.8,12.5,c.bold,c);
+  drawWrappedA4(p2,`CNPJ: ${pr.cnpj||""}`,37,362,500,10.8,12.5,c.bold,c);
+  drawWrappedA4(p2,`ENDEREÇO: ${pr.address||""}`,37,377,500,10.3,12.0,c.font,c);
+  drawWrappedA4(p2,`CONTATO: ${pr.contact||""}`,37,400,500,10.3,12.0,c.font,c);
+
+  // Data e assinaturas: substitui somente os dados variáveis, mantendo as linhas do modelo.
+  coverA4(p4,35,229,500,20,c);
+  drawA4(p4,`Mirassol D’Oeste/MT, ${longDate(new Date())}`,37,231,12,c.font,c);
+  coverA4(p4,170,306,265,17,c);
+  drawCenteredA4(p4,"Evolua+ Profissões-Valéria Da Silva Moura",170,306,265,12,c.bold,c);
+  coverA4(p4,205,351,185,17,c);
+  drawCenteredA4(p4,one.name||"",205,351,185,12,c.bold,c);
+  coverA4(p4,205,397,185,17,c);
+  if(show2) drawCenteredA4(p4,two.name||"",205,397,185,12,c.bold,c);
+}
+
+function coverA4(page,x,top,w,h,c){
+  page.drawRectangle({x,y:A4_H-(top+h),width:w,height:h,color:c.white});
+}
+function drawA4(page,text,x,top,size,font,c){
+  page.drawText(sanitize(text),{x,y:A4_H-(top+size),size,color:c.black,font});
+}
+function drawCenteredA4(page,text,x,top,w,size,font,c){
+  const s=sanitize(text),tw=font.widthOfTextAtSize(s,size);
+  page.drawText(s,{x:x+Math.max(0,(w-tw)/2),y:A4_H-(top+size),size,color:c.black,font});
+}
+function drawFittedA4(page,text,x,top,w,size,font,c){
+  let s=sanitize(text),z=size;
+  while(z>5&&font.widthOfTextAtSize(s,z)>w)z-=.2;
+  page.drawText(s,{x,y:A4_H-(top+z),size:z,color:c.black,font});
+}
+function drawWrappedA4(page,text,x,top,w,size,lineHeight,font,c){
+  const words=sanitize(text).split(/\s+/),lines=[];let line="";
+  for(const word of words){
+    const test=line?line+" "+word:word;
+    if(font.widthOfTextAtSize(test,size)<=w) line=test;
+    else {if(line)lines.push(line);line=word;}
+  }
+  if(line)lines.push(line);
+  lines.slice(0,8).forEach((ln,i)=>drawA4(page,ln,x,top+i*lineHeight,size,font,c));
 }
 
 function fillCancel(c,d){
