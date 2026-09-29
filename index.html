@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#6d28d9">
+  <title>Gestão de Contratos | Evolua+ Academy</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
+  <header class="topbar">
+    <button class="brand" id="homeButton" type="button" aria-label="Voltar ao início">
+      <img src="assets/logo-academy.png" alt="Evolua+ Academy">
+      <span>
+        <strong>Gestão de Contratos</strong>
+        <small>Evolua+ Academy</small>
+      </span>
+    </button>
+    <div class="privacy-pill"><span></span> Processamento local • nenhum dado é salvo</div>
+  </header>
+
+  <main>
+    <section class="screen active" id="startScreen">
+      <div class="hero">
+        <div class="eyebrow">DOCUMENTOS INTELIGENTES</div>
+        <h1>Qual contrato você<br><em>deseja gerar?</em></h1>
+        <p>Escolha o modelo, preencha os dados e receba o PDF pronto para assinatura.</p>
+      </div>
+      <div class="model-grid">
+        <button class="model-card presencial" type="button" data-model="presencial">
+          <div class="card-icon">🏫</div>
+          <div>
+            <span class="tag">ENSINO PRESENCIAL</span>
+            <h2>Contrato Presencial</h2>
+            <p>Curso, módulos, carga horária, agenda de aulas e parcelamento.</p>
+          </div>
+          <b>Começar <span>→</span></b>
+        </button>
+        <button class="model-card academy" type="button" data-model="academy">
+          <div class="card-icon">✦</div>
+          <div>
+            <span class="tag">ASSINATURA DIGITAL</span>
+            <h2>Evolua+ Academy</h2>
+            <p>Plano, cursos incluídos, usuários, vigência e forma de pagamento.</p>
+          </div>
+          <b>Começar <span>→</span></b>
+        </button>
+      </div>
+      <div class="steps-row">
+        <span><b>1</b> Escolha o modelo</span>
+        <i></i>
+        <span><b>2</b> Preencha os dados</span>
+        <i></i>
+        <span><b>3</b> Baixe o PDF</span>
+      </div>
+    </section>
+
+    <section class="screen" id="formScreen">
+      <div class="form-heading">
+        <button class="back-button" id="backButton" type="button">← Voltar</button>
+        <div>
+          <span class="eyebrow" id="formEyebrow">NOVO CONTRATO</span>
+          <h1 id="formTitle">Contrato Presencial</h1>
+        </div>
+        <div class="progress"><span id="progressText">Etapa 1 de 4</span><div><i id="progressBar"></i></div></div>
+      </div>
+
+      <form id="contractForm" novalidate>
+        <div class="form-step active" data-step="1">
+          <div class="section-title"><span>01</span><div><h2>Dados do aluno</h2><p>Informações da pessoa que realizará o curso.</p></div></div>
+          <div class="field-grid">
+            <label class="full">Número do contrato<input name="contractNumber" required placeholder="Ex.: 260724001"></label>
+            <label class="wide">Nome completo ou razão social<input name="studentName" required autocomplete="name"></label>
+            <label>Data de nascimento<input type="date" name="studentBirth" required></label>
+            <label>Estado civil<select name="studentCivil"><option>Solteiro(a)</option><option>Casado(a)</option><option>Divorciado(a)</option><option>Viúvo(a)</option><option>Não se aplica</option></select></label>
+            <label>Sexo<select name="studentGender"><option value="">Selecione</option><option>Feminino</option><option>Masculino</option><option>Outro</option><option>Prefiro não informar</option></select></label>
+            <label>Profissão<input name="studentProfession"></label>
+            <label>RG / Inscrição Estadual<input name="studentRg"></label>
+            <label>CPF / CNPJ<input name="studentCpf" required data-mask="cpfcnpj"></label>
+            <label>Telefone<input name="studentPhone" required data-mask="phone"></label>
+            <label class="wide">E-mail<input type="email" name="studentEmail"></label>
+            <label class="wide">Endereço<input name="studentAddress" required></label>
+            <label>Bairro<input name="studentDistrict" required></label>
+            <label>CEP<input name="studentCep" data-mask="cep"></label>
+            <label>Cidade<input name="studentCity" value="Mirassol D’Oeste" required></label>
+            <label>UF<input name="studentState" value="MT" maxlength="2" required></label>
+          </div>
+        </div>
+
+        <div class="form-step" data-step="2">
+          <div class="section-title"><span>02</span><div><h2>Responsável financeiro</h2><p>Preencha quando o aluno for menor ou o pagador for outra pessoa.</p></div></div>
+          <label class="toggle-row"><input type="checkbox" id="samePayer" name="samePayer"><span></span> O aluno também é o responsável financeiro</label>
+          <div class="field-grid" id="payerFields">
+            <label class="wide">Nome completo / empresa<input name="payerName"></label>
+            <label>Data de nascimento<input type="date" name="payerBirth"></label>
+            <label>Profissão<input name="payerProfession"></label>
+            <label>RG<input name="payerRg"></label>
+            <label>CPF / CNPJ<input name="payerCpf" data-mask="cpfcnpj"></label>
+            <label>Telefone<input name="payerPhone" data-mask="phone"></label>
+            <label class="wide">Endereço<input name="payerAddress"></label>
+            <label>Bairro<input name="payerDistrict"></label>
+            <label>CEP<input name="payerCep" data-mask="cep"></label>
+            <label>Cidade<input name="payerCity" value="Mirassol D’Oeste"></label>
+          </div>
+        </div>
+
+        <div class="form-step" data-step="3">
+          <div id="presentialFields">
+            <div class="section-title"><span>03</span><div><h2>Curso e cronograma</h2><p>Defina o conteúdo, a carga horária e o período das aulas.</p></div></div>
+            <div class="field-grid">
+              <label class="wide">Curso<select name="courseName" id="courseName"></select></label>
+              <label>Modalidade<select name="courseMode"><option>Presencial e online</option><option>Presencial</option><option>100% online</option></select></label>
+              <label>Carga horária<input type="number" min="1" name="workload" id="workload" value="134"></label>
+              <label>Previsão de início<input type="date" name="courseStart" id="courseStart"></label>
+              <label>Previsão de término<input type="date" name="courseEnd" id="courseEnd"></label>
+              <label class="wide">Dias e horários contratados<input name="schedule" placeholder="Ex.: Quinta-feira, das 15h às 17h"></label>
+              <label class="full">Módulos do curso<textarea name="modules" id="modules" rows="7"></textarea><small>Um módulo por linha. Você pode editar antes de gerar.</small></label>
+            </div>
+          </div>
+
+          <div id="academyFields" hidden>
+            <div class="section-title"><span>03</span><div><h2>Plano e assinatura</h2><p>O plano selecionado carrega usuários, valor e cursos automaticamente.</p></div></div>
+            <div class="field-grid">
+              <label class="wide">Plano<select name="planName" id="planName"></select></label>
+              <label>Quantidade de usuários<input type="number" min="1" name="planUsers" id="planUsers"></label>
+              <label>Mensalidade (R$)<input type="number" min="0" step="0.01" name="monthlyPrice" id="monthlyPrice"></label>
+              <label>Início da assinatura<input type="date" name="subscriptionStart" id="subscriptionStart"></label>
+              <label>Término da assinatura<input type="date" name="subscriptionEnd" id="subscriptionEnd"></label>
+              <label class="full">Cursos pertencentes ao plano<textarea name="planCourses" id="planCourses" rows="8"></textarea><small>Um curso por linha. A lista pode ser ajustada antes da geração.</small></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step" data-step="4">
+          <div class="section-title"><span>04</span><div><h2>Valores e pagamento</h2><p>O sistema calculará totais, parcelas, vencimentos e valores por extenso.</p></div></div>
+          <div class="field-grid">
+            <label id="courseValueField"><span id="courseValueLabel">Valor de cada parcela (R$)</span><input type="number" min="0" step="0.01" name="courseValue" value="332"></label>
+            <label id="enrollmentField">Matrícula (R$)<input type="number" min="0" step="0.01" name="enrollmentValue" value="249"></label>
+            <label>Forma de pagamento<select name="paymentMethod" id="paymentMethod"><option>Boleto bancário</option><option>Cartão de crédito</option><option>PIX</option><option>Cartão de débito</option><option>Dinheiro</option></select></label>
+            <label>Quantidade de parcelas<input type="number" min="1" max="36" name="installments" id="installments" value="12"></label>
+            <label>Primeiro vencimento<input type="date" name="firstDue" id="firstDue"></label>
+            <label>Dia dos vencimentos<input type="number" min="1" max="31" name="dueDay" id="dueDay" value="10"></label>
+            <label>Desconto por parcela (R$)<input type="number" min="0" step="0.01" name="discount" value="0"></label>
+            <label>Material didático<select name="material"><option>Digital gratuito</option><option>Impresso incluso</option><option>Adquirido separadamente</option></select></label>
+            <label class="full">Observação ou condição especial<textarea name="notes" rows="3" placeholder="Opcional"></textarea></label>
+          </div>
+          <div class="summary-card" id="paymentSummary"></div>
+        </div>
+
+        <div class="form-actions">
+          <button class="secondary" type="button" id="prevStep">← Anterior</button>
+          <button class="primary" type="button" id="nextStep">Continuar →</button>
+          <button class="primary generate" type="submit" id="generateButton">Gerar PDF <span>↓</span></button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status"></div>
+  <div id="pdfMount" aria-hidden="true"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js" referrerpolicy="no-referrer"></script>
+  <script src="template-pdf.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
