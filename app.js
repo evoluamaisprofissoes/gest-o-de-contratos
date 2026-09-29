@@ -58,144 +58,57 @@ const COURSES={
 "Video Maker":{workload:32,months:4,modules:["Adobe Premiere Creative Cloud","Adobe After Effects Creative Cloud"]},
 "Youtuber":{workload:8,months:1,modules:["YouTuber: Como Ter um Canal de Sucesso"]},
 "Personalizado":{workload:1,months:12,modules:["Informe os módulos contratados"]}};
-const EJA_PROVIDERS={
-  mt:{
-    legal:"SISTEMA DE ENSINO FUNDAMENTAL, MEDIO E PROFISSIONAL A DISTANCIA LTDA",
-    fantasy:"MT-CURSOS Á DISTÂNCIA", cnpj:"10.807.062.0001-63",
-    address:"Rua 145, quadra 147, CPA IV, nº 05, bairro Morada Da Serra, Cuiabá-MT", contact:"(65) 3649-3357",
-    record:"Certificado registrado sob nº 256932. Folha nº 15, Livro nº 024, nos termos da Resolução nº 249/07 — CEE/MT. Cuiabá-MT, 22/12/2025."
-  },
-  cec:{
-    legal:"CEC — CENTRO EDUCACIONAL DO CARIRI", fantasy:"CEC Educacional", cnpj:"23.466.918/0001-26",
-    address:"Avenida Professora Maria Salete Pereira Bezerra, nº 267, bairro Alto São Vicente, Monteiro-PB, Brasil", contact:"(83) 99657-0411",
-    record:"INEP 2512791. Credenciamento: Resolução CEE-PB nº 186/2022. Autorização: Resolução CEE-PB nº 187/2022."
-  }
-};
-const SPECIAL_MODELS=new Set(["eja","cancel","trancamento","scholarship"]);
 let selectedModel="presencial",currentStep=1;
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)],form=$("#contractForm");
 
 function init(){
- try{
-  // O botão de geração é ligado primeiro, antes de qualquer rotina opcional.
-  // Isso impede que um erro em um campo secundário impeça a geração do PDF.
-  const generateBtn=document.getElementById("generateButton");
-  if(generateBtn){
-    generateBtn.addEventListener("click", generatePdf);
-  }
-  Object.keys(COURSES).forEach(v=>$("#courseName").add(new Option(v,v)));
-  Object.keys(PLANS).forEach(v=>$("#planName").add(new Option(v,v)));
-  setDefaults();applyCourse();applyPlan();setTrialDefaults();setSpecialDefaults();updateSummary();
-  $$(".model-card").forEach(b=>b.addEventListener("click",()=>openForm(b.dataset.model)));
-  $("#backButton").onclick=()=>currentStep===1?showHome():goStep(currentStep-1);
-  $("#homeButton").onclick=showHome;
-  $("#nextStep").onclick=()=>validateStep()&&goStep(currentStep+1);
-  $("#prevStep").onclick=()=>goStep(currentStep-1);
-  $("#samePayer").onchange=togglePayer;
-  $("#courseName").onchange=applyCourse;
-  $("#planName").onchange=applyPlan;
-  $("#courseStart").onchange=()=>setEnd("courseStart","courseEnd",COURSES[$("#courseName").value]?.months||12);
-  $("#subscriptionStart").onchange=()=>setEnd("subscriptionStart","subscriptionEnd",12);
-  form.elements.courseValue.addEventListener("input",()=>{if(selectedModel==="academy")syncAcademyMonthly();updateSummary()});
-  form.elements.enrollmentValue.addEventListener("input",updateSummary);
-  $("#installments").addEventListener("input",()=>{if(selectedModel==="academy")syncAcademyMonthly();updateSummary()});
-  $("#monthlyPrice").addEventListener("input",()=>{if(selectedModel==="academy")syncAcademyTotal();updateSummary()});
-  form.elements.discount.addEventListener("input",updateSummary);
-  $("#firstDue").addEventListener("change",updateSummary);
-  $("#trialActivationDate").addEventListener("change",()=>setTrialEnd(true));
-  $("#ejaStudentCount").addEventListener("change",toggleEjaStudent2);
-  $("#trankDate").addEventListener("change",syncTrankDates);
-  $("#scholarOriginal").addEventListener("input",syncScholarship);
-  $("#scholarPercent").addEventListener("input",syncScholarship);
-  $("#scholarFinal").addEventListener("input",()=>{ const final=Math.max(0,+$("#scholarFinal").value||0); const n=Math.max(1,+$("#scholarInstallments").value||1); $("#scholarPart").value=(final/n).toFixed(2); });
-  $("#scholarInstallments").addEventListener("input",()=>{ const final=Math.max(0,+$("#scholarFinal").value||0); const n=Math.max(1,+$("#scholarInstallments").value||1); $("#scholarPart").value=(final/n).toFixed(2); });
-  $("#scholarType").addEventListener("change",syncScholarship);
-  $$('[data-mask]').forEach(i=>i.addEventListener("input",applyMask));
- }catch(err){console.error("Falha ao inicializar Gestão de Contratos:",err)}
+ Object.keys(COURSES).forEach(v=>$("#courseName").add(new Option(v,v)));
+ Object.keys(PLANS).forEach(v=>$("#planName").add(new Option(v,v)));
+ setDefaults();applyCourse();applyPlan();updateSummary();
+ $$(".model-card").forEach(b=>b.onclick=()=>openForm(b.dataset.model));
+ $("#backButton").onclick=()=>currentStep===1?showHome():goStep(currentStep-1);
+ $("#homeButton").onclick=showHome;$("#nextStep").onclick=()=>validateStep()&&goStep(currentStep+1);$("#prevStep").onclick=()=>goStep(currentStep-1);
+ $("#samePayer").onchange=togglePayer;$("#courseName").onchange=applyCourse;$("#planName").onchange=applyPlan;
+ $("#courseStart").onchange=()=>setEnd("courseStart","courseEnd",COURSES[$("#courseName").value]?.months||12);
+ $("#subscriptionStart").onchange=()=>setEnd("subscriptionStart","subscriptionEnd",12);
+ form.elements.courseValue.addEventListener("input",()=>{if(selectedModel==="academy")syncAcademyMonthly();updateSummary()});
+ form.elements.enrollmentValue.addEventListener("input",updateSummary);
+ $("#installments").addEventListener("input",()=>{if(selectedModel==="academy")syncAcademyMonthly();updateSummary()});
+ $("#monthlyPrice").addEventListener("input",()=>{if(selectedModel==="academy")syncAcademyTotal();updateSummary()});
+ form.elements.discount.addEventListener("input",updateSummary);
+ $("#firstDue").addEventListener("change",updateSummary);
+ $$("[data-mask]").forEach(i=>i.oninput=applyMask);form.onsubmit=generatePdf;
 }
-function isSpecial(model=selectedModel){return SPECIAL_MODELS.has(model)}
-function setSpecialDefaults(){
- const today=dateInput(new Date());
- ["#cancelDate","#trankDate","#scholarDate"].forEach(sel=>{const el=$(sel);if(el&&!el.value)el.value=today});
- const sv=$("#scholarValidity");if(sv&&!sv.value){const d=localDate(today);d.setDate(d.getDate()+7);sv.value=dateInput(d)}
- syncTrankDates();syncScholarship();toggleEjaStudent2();
-}
-function toggleEjaStudent2(){const show=$("#ejaStudentCount")?.value==="2";$("#ejaStudent2Block").hidden=!show;[...$("#ejaStudent2Block").querySelectorAll("input,select")].forEach(i=>i.required=show && i.name==="eja2Name");}
-function syncTrankDates(){const v=$("#trankDate")?.value;if(!v)return;const base=localDate(v);const a=new Date(base),b=new Date(base),c=new Date(base);a.setMonth(a.getMonth()+3);b.setMonth(b.getMonth()+12);c.setFullYear(c.getFullYear()+1);$("#trankReturn").value=dateInput(a);$("#trankMax").value=dateInput(b);$("#trankValidity").value=dateInput(c)}
-function syncScholarship(){
- const original=Math.max(0,+$("#scholarOriginal")?.value||0);
- let percent=Math.min(100,Math.max(0,+$("#scholarPercent")?.value||0));
- if($("#scholarType")?.value==="integral"){percent=100;$("#scholarPercent").value="100";}
- const installments=Math.max(1,+$("#scholarInstallments")?.value||1);
- const final=original*(1-percent/100);
- const finalEl=$("#scholarFinal"), partEl=$("#scholarPart");
- if(finalEl) finalEl.value=final.toFixed(2);
- if(partEl) partEl.value=(final/installments).toFixed(2);
-}
-function openForm(model){
- selectedModel=model;currentStep=1;$("#startScreen").classList.remove("active");$("#formScreen").classList.add("active");
- const a=model==="academy",t=model==="trial",sp=isSpecial(model);
- const titles={eja:"Contrato de Intermediação EJA EAD",cancel:"Termo de Rescisão de Contrato",trancamento:"Aditivo de Trancamento de Aulas",scholarship:"Termo de Compromisso de Bolsa"};
- const eyebrows={eja:"EJA • INTERMEDIAÇÃO",cancel:"RESCISÃO",trancamento:"TRANCAMENTO",scholarship:"COMERCIAL"};
- $("#formTitle").textContent=sp?titles[model]:t?"Termo de Compromisso de Acesso Gratuito":a?"Contrato Evolua+ Academy":"Contrato Presencial";
- $("#formEyebrow").textContent=sp?eyebrows[model]:t?"ACESSO EXPERIMENTAL":a?"ASSINATURA DIGITAL":"ENSINO PRESENCIAL";
- $("#trialFields").hidden=!t;$("#standardStudentFields").hidden=t||sp;$("#specialFields").hidden=!sp;
- ["specialEja","specialCancel","specialTrancamento","specialScholarship"].forEach(id=>$("#"+id).hidden=true);
- if(sp)$("#"+({eja:"specialEja",cancel:"specialCancel",trancamento:"specialTrancamento",scholarship:"specialScholarship"}[model])).hidden=false;
- $("#presentialFields").hidden=a||t||sp;$("#academyFields").hidden=!a||sp;$("#courseValueField").hidden=t||sp;$("#enrollmentField").hidden=a||t||sp;$("#paymentSummary").hidden=t||sp;
- $("#installments").max=a?12:36;$("#step1Title").textContent=sp?"Dados do documento":t?"Dados para liberação":"Dados do aluno";$("#step1Subtitle").textContent=sp?"Preencha os dados necessários e gere o documento pronto para assinatura.":t?"Informe os dados necessários para liberar o acesso experimental.":"Informações da pessoa que realizará o curso.";
- if(t)setTrialDefaults();else if(a){$("#installments").value=12;applyPlan()}else if(sp)setSpecialDefaults();
- goStep(1);updateSummary();
-}
+function openForm(model){selectedModel=model;currentStep=1;$("#startScreen").classList.remove("active");$("#formScreen").classList.add("active");const a=model==="academy";$("#formTitle").textContent=a?"Contrato Evolua+ Academy":"Contrato Presencial";$("#formEyebrow").textContent=a?"ASSINATURA DIGITAL":"ENSINO PRESENCIAL";$("#presentialFields").hidden=a;$("#academyFields").hidden=!a;$("#courseValueField").hidden=false;$("#courseValueLabel").textContent=a?"Valor total do contrato (R$)":"Valor de cada parcela (R$)";$("#enrollmentField").hidden=a;$("#installments").max=a?12:36;if(a){$("#installments").value=12;applyPlan()}goStep(1);updateSummary()}
 function showHome(){$("#formScreen").classList.remove("active");$("#startScreen").classList.add("active");scrollTo(0,0)}
-function goStep(n){const totalSteps=(selectedModel==="trial"||isSpecial())?1:4;currentStep=Math.max(1,Math.min(totalSteps,n));$$(".form-step").forEach(s=>s.classList.toggle("active",+s.dataset.step===currentStep));$("#progressText").textContent=`Etapa ${currentStep} de ${totalSteps}`;$("#progressBar").style.width=`${currentStep/totalSteps*100}%`;$("#prevStep").style.display=currentStep===1?"none":"block";$("#nextStep").style.display=currentStep===totalSteps?"none":"block";$("#generateButton").classList.toggle("show",currentStep===totalSteps);if(currentStep===4)updateSummary();scrollTo({top:0,behavior:"smooth"})}
-function validateStep(){let ok=true;const step=$( `.form-step[data-step="${currentStep}"]`);$$("[required]",step).filter(i=>!i.closest("[hidden]")).forEach(i=>{let bad=!String(i.value||"").trim();i.classList.toggle("invalid",bad);if(bad)ok=false});if(!ok)toast("Preencha os campos obrigatórios.");return ok}
+function goStep(n){currentStep=Math.max(1,Math.min(4,n));$$(".form-step").forEach(s=>s.classList.toggle("active",+s.dataset.step===currentStep));$("#progressText").textContent=`Etapa ${currentStep} de 4`;$("#progressBar").style.width=`${currentStep*25}%`;$("#prevStep").style.display=currentStep===1?"none":"block";$("#nextStep").style.display=currentStep===4?"none":"block";$("#generateButton").classList.toggle("show",currentStep===4);if(currentStep===4)updateSummary();scrollTo({top:0,behavior:"smooth"})}
+function validateStep(){let ok=true;const step=$(`.form-step[data-step="${currentStep}"]`);$$("[required]",step).filter(i=>!i.closest("[hidden]")).forEach(i=>{let bad=!i.value.trim();i.classList.toggle("invalid",bad);if(bad)ok=false});if(!ok)toast("Preencha os campos obrigatórios.");return ok}
+function togglePayer(){const off=$("#samePayer").checked;$("#payerFields").style.opacity=off?".45":"1";$$("input",$("#payerFields")).forEach(i=>i.disabled=off)}
+function applyCourse(){const c=COURSES[$("#courseName").value];if(!c)return;$("#workload").value=c.workload;$("#modules").value=c.modules.join("\n");setEnd("courseStart","courseEnd",c.months)}
 function applyPlan(){const p=PLANS[$("#planName").value];if(!p)return;$("#planUsers").value=p.users;$("#monthlyPrice").value=p.price;$("#planCourses").value=p.courses.join("\n");if(selectedModel==="academy")syncAcademyTotal();updateSummary()}
 function setDefaults(){const d=new Date(),iso=dateInput(d);["courseStart","subscriptionStart","firstDue"].forEach(id=>$("#"+id).value=iso);setEnd("courseStart","courseEnd",12);setEnd("subscriptionStart","subscriptionEnd",12)}
-function setTrialDefaults(){const d=new Date(),iso=dateInput(d);if(!$("#trialActivationDate").value)$("#trialActivationDate").value=iso;setTrialEnd(false)}
-function setTrialEnd(force){const start=localDate($("#trialActivationDate").value);if(!start)return;const end=new Date(start);end.setDate(end.getDate()+7);if(force || !$("#trialEndDate").value)$("#trialEndDate").value=dateInput(end)}
 function setEnd(s,e,m){const d=localDate($("#"+s).value);if(!d)return;d.setMonth(d.getMonth()+m);d.setDate(d.getDate()-1);$("#"+e).value=dateInput(d)}
 function syncAcademyTotal(){const n=Math.max(1,+$("#installments").value||1);form.elements.courseValue.value=((+$("#monthlyPrice").value||0)*n).toFixed(2)}
 function syncAcademyMonthly(){const n=Math.max(1,+$("#installments").value||1);$("#monthlyPrice").value=((+form.elements.courseValue.value||0)/n).toFixed(2)}
-function updateSummary(){const a=selectedModel==="academy",n=Math.max(1,+$("#installments").value||1),total=a?(+form.elements.courseValue.value||0):(+form.elements.courseValue.value||0)+(+form.elements.enrollmentValue.value||0),part=total/n;$("#paymentSummary").innerHTML=`<div><span>Valor total</span><strong>${money(total)}</strong></div><div><span>Parcelamento</span><strong>${n}× de ${money(part)}</strong></div><div><span>Primeiro vencimento</span><strong>${brDate($("#firstDue").value)||"—"}</strong></div>`}
+function updateSummary(){const a=selectedModel==="academy",n=Math.max(1,+$("#installments").value||1),parcel=+form.elements.courseValue.value||0,total=a?parcel:parcel*n+(+form.elements.enrollmentValue.value||0),part=a?total/n:parcel;$("#paymentSummary").innerHTML=`<div><span>Valor total</span><strong>${money(total)}</strong></div><div><span>Parcelamento</span><strong>${n}× de ${money(part)}</strong></div><div><span>Primeiro vencimento</span><strong>${brDate($("#firstDue").value)||"—"}</strong></div>`}
 function applyMask(e){let v=e.target.value.replace(/\D/g,""),t=e.target.dataset.mask;if(t==="cep")v=v.slice(0,8).replace(/(\d{5})(\d)/,"$1-$2");if(t==="phone"){v=v.slice(0,11);v=v.length>10?v.replace(/(\d{2})(\d{5})(\d{4})/,"($1) $2-$3"):v.replace(/(\d{2})(\d{4})(\d{0,4})/,"($1) $2-$3")}if(t==="cpfcnpj"){v=v.slice(0,14);v=v.length>11?v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,"$1.$2.$3/$4-$5"):v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,"$1.$2.$3-$4")}e.target.value=v}
-function getData(){
- const d=Object.fromEntries(new FormData(form).entries());
- if(selectedModel==="trial"){d.studentName=d.trialStudentName;d.studentCpf=d.trialStudentCpf;d.studentEmail=d.trialStudentEmail;d.studentPhone=d.trialStudentPhone;d.activationDate=d.trialActivationDate;d.trialEndDate=d.trialEndDate}
- else if(selectedModel==="academy"){const n=Math.max(1,+d.installments||1);d.monthlyPrice=((+d.courseValue||0)/n).toFixed(2)}
- else if(selectedModel==="eja"){d.ejaProviderData=EJA_PROVIDERS[d.ejaProvider||"mt"];d.ejaStudentCount=d.ejaStudentCount||"1"}
- if($("#samePayer")?.checked)["Name","Birth","Profession","Rg","Cpf","Phone","Address","District","Cep","City"].forEach(k=>d["payer"+k]=d["student"+k]||"");
- return d;
+function getData(){const d=Object.fromEntries(new FormData(form).entries());if(selectedModel==="academy"){const n=Math.max(1,+d.installments||1);d.monthlyPrice=((+d.courseValue||0)/n).toFixed(2)}if($("#samePayer").checked)["Name","Birth","Profession","Rg","Cpf","Phone","Address","District","Cep","City"].forEach(k=>d["payer"+k]=d["student"+k]||"");return d}
+async function generatePdf(e){e.preventDefault();if(!validateStep())return;const b=$("#generateButton");b.disabled=true;b.textContent="Gerando PDF…";try{const d=getData();await generateContractFromTemplate(d,selectedModel);toast("PDF gerado com sucesso.")}catch(err){console.error(err);toast("Não foi possível gerar o PDF.")}finally{b.disabled=false;b.innerHTML='Gerar PDF <span>↓</span>'}}
+
+function commonPage(d,banner,academy){
+ const total=academy?(+d.courseValue||0):(+d.courseValue||0)*Math.max(1,+d.installments||1)+(+d.enrollmentValue||0);
+ return page(`<img class="pdf-banner" src="${banner}"><div class="pdf-title">CONTRATO DE PRESTAÇÃO DE SERVIÇOS EDUCACIONAIS — Nº ${esc(d.contractNumber)}</div>
+ <div class="pdf-section-title">01 — Dados do aluno / empresa</div>
+ <table class="pdf-table"><tr><td colspan="4">${cell("Nome do aluno / empresa",d.studentName)}</td><td>${cell("Nascimento",brDate(d.studentBirth))}</td><td>${cell("Estado civil",d.studentCivil)}</td><td>${cell("Sexo",d.studentGender)}</td></tr><tr><td colspan="2">${cell("Profissão",d.studentProfession)}</td><td colspan="5">${cell("Endereço",d.studentAddress)}</td></tr><tr><td>${cell("Bairro",d.studentDistrict)}</td><td>${cell("CEP",d.studentCep)}</td><td colspan="2">${cell("Cidade",d.studentCity)}</td><td>${cell("UF",d.studentState)}</td><td colspan="2">${cell("E-mail",d.studentEmail)}</td></tr><tr><td colspan="2">${cell("RG / Insc. Estadual",d.studentRg)}</td><td colspan="2">${cell("CPF / CNPJ",d.studentCpf)}</td><td colspan="3">${cell("Telefone",d.studentPhone)}</td></tr></table>
+ <div class="pdf-section-title">02 — Pagador responsável financeiro</div>
+ <table class="pdf-table"><tr><td colspan="4">${cell("Nome / empresa",d.payerName)}</td><td>${cell("Nascimento",brDate(d.payerBirth))}</td></tr><tr><td colspan="2">${cell("RG",d.payerRg)}</td><td>${cell("CPF / CNPJ",d.payerCpf)}</td><td colspan="2">${cell("Profissão",d.payerProfession)}</td></tr><tr><td colspan="3">${cell("Endereço",d.payerAddress)}</td><td colspan="2">${cell("Bairro",d.payerDistrict)}</td></tr><tr><td>${cell("CEP",d.payerCep)}</td><td colspan="2">${cell("Cidade",d.payerCity)}</td><td colspan="2">${cell("Telefone",d.payerPhone)}</td></tr></table>
+ <p class="pdf-small">Valéria Da Silva Moura ME, nome fantasia Evolua+ Profissões, CNPJ 44.456.212/0001-53, e o tomador identificado acima firmam o presente contrato.</p>
+ <div class="pdf-section-title">03 — Valor e condições de pagamento</div><table class="pdf-table"><tr><td>${cell(academy?"Plano":"Valor do curso",academy?d.planName:money(d.courseValue))}</td>${academy?"":`<td>${cell("Matrícula",money(d.enrollmentValue))}</td>`}<td>${cell("Pagamento",d.paymentMethod)}</td><td>${cell("Valor total",money(total))}</td></tr></table>${installmentTable(d,total)}
+ <div class="pdf-section-title">05 — Identificação, prazo e duração</div>${academy?academyInfo(d):courseInfo(d)}`,1);
 }
-async function generatePdf(e){
- if(e&&typeof e.preventDefault==="function")e.preventDefault();
- if(e&&typeof e.stopPropagation==="function")e.stopPropagation();
- const b=$("#generateButton");
- if(!b)return false;
- if(b.dataset.busy==="1")return false;
- if(!validateStep())return false;
- b.dataset.busy="1"; b.disabled=true; b.innerHTML="Gerando PDF…";
- try{
-   if(typeof window.generateContractFromTemplate!=="function")throw new Error("O módulo de PDF não foi carregado. Faça Ctrl+F5 e tente novamente.");
-   if(typeof PDFLib==="undefined")throw new Error("A biblioteca PDF não foi carregada. Verifique a conexão com a internet.");
-   const d=getData();
-   await window.generateContractFromTemplate(d,selectedModel);
-   toast("PDF gerado com sucesso. Verifique seus downloads.");
-   return true;
- }catch(err){
-   console.error("Erro ao gerar PDF:",err);
-   const msg=err&&err.message?err.message:String(err);
-   toast("Erro ao gerar PDF: "+msg);
-   alert("Não foi possível gerar o PDF.\n\n"+msg);
-   return false;
- }finally{
-   b.dataset.busy="0"; b.disabled=false; b.innerHTML='Gerar PDF <span>↓</span>';
- }
-}
-window.generatePdf=generatePdf;
 function courseInfo(d){return `<table class="pdf-table pdf-plan-table"><tr><th>Curso</th><th>Carga horária</th><th>Início</th><th>Término</th></tr><tr><td>${esc(d.courseName)}</td><td>${esc(d.workload)} horas</td><td>${brDate(d.courseStart)}</td><td>${brDate(d.courseEnd)}</td></tr><tr><td>${esc(d.courseMode)}</td><td colspan="3" class="content"><b>Módulos:</b> ${lines(d.modules).join("; ")}</td></tr><tr><th colspan="4">Dias e horários contratados</th></tr><tr><td colspan="4">${esc(d.schedule)}</td></tr></table>`}
 function academyInfo(d){return `<table class="pdf-table pdf-plan-table"><tr><th>Plano</th><th>Usuários</th><th>Início da assinatura</th><th>Término da assinatura</th></tr><tr><td>${esc(d.planName)}</td><td>${esc(d.planUsers)}</td><td>${brDate(d.subscriptionStart)}</td><td>${brDate(d.subscriptionEnd)}</td></tr><tr><td>Acesso 100% online</td><td colspan="3" class="content"><b>Cursos:</b> ${lines(d.planCourses).join("; ")}</td></tr><tr><th colspan="4">Acesso</th></tr><tr><td colspan="4">Todos os dias, em horário livre.</td></tr></table>`}
-function installmentTable(d,total){const n=Math.max(1,+d.installments||1),v=total/n,dates=dueDates(d.firstDue,n,+d.dueDay||10);return `<table class="pdf-table"><tr><th>Nº</th><th>Vencimento</th><th>Valor</th><th>Desconto</th><th>Multa</th><th>Juros/mês</th></tr>${dates.map((x,i)=>`<tr><td>${i+1}</td><td>${brDate(x)}</td><td>${money(v)}</td><td>${money(d.discount||0)}</td><td>2%</td><td>1%</td></tr>`).join("")}</table>`}
+function installmentTable(d,total){const n=Math.max(1,+d.installments||1),v=selectedModel==="academy"?total/n:(+d.courseValue||0),dates=dueDates(d.firstDue,n,+d.dueDay||10);return `<table class="pdf-table"><tr><th>Nº</th><th>Vencimento</th><th>Valor</th><th>Desconto</th><th>Multa</th><th>Juros/mês</th></tr>${dates.map((x,i)=>`<tr><td>${i+1}</td><td>${brDate(x)}</td><td>${money(v)}</td><td>${money(d.discount||0)}</td><td>2%</td><td>1%</td></tr>`).join("")}</table>`}
 
 const presentialA=d=>`<h3>1ª — Do objeto</h3><p>O CONTRATANTE contrata os serviços da CONTRATADA para ministrar o curso especificado neste instrumento, na modalidade escolhida, por meio do Sistema de Ensino Presencial Interativo e dos recursos educacionais disponibilizados.</p>
 <p><b>2ª.</b> A CONTRATADA fornecerá material didático para uso interno durante o período de aula, ressalvados materiais específicos previamente informados.</p>

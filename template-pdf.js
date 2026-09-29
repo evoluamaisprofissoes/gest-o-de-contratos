@@ -4,8 +4,7 @@ const A4_W=595.28,A4_H=841.89,SRC_W=612,SRC_H=792,SX=A4_W/SRC_W,SY=A4_H/SRC_H;
 async function generateContractFromTemplate(d,model){
   if(!window.PDFLib)throw new Error("Biblioteca de PDF indisponível");
   const {PDFDocument,StandardFonts,rgb}=PDFLib;
-  if(["scholarship"].includes(model)) return generateScholarshipPdf(d);
-  const template=model==="academy"?"assets/modelo-academy.pdf":model==="trial"?"assets/modelo-trial.pdf":model==="eja"?"assets/modelo-eja-intermediacao.pdf":model==="cancel"?"assets/modelo-cancelamento.pdf":model==="trancamento"?"assets/modelo-trancamento.pdf":"assets/modelo-presencial.pdf";
+  const template=model==="academy"?"assets/modelo-academy.pdf":"assets/modelo-presencial.pdf";
   const sourceBytes=await fetch(template).then(r=>{if(!r.ok)throw new Error("Modelo não encontrado");return r.arrayBuffer()});
   const source=await PDFDocument.load(sourceBytes);
   const out=await PDFDocument.create();
@@ -14,178 +13,11 @@ async function generateContractFromTemplate(d,model){
   const bold=await out.embedFont(StandardFonts.HelveticaBold);
   const pages=embedded.map(ep=>{const p=out.addPage([A4_W,A4_H]);p.drawPage(ep,{x:0,y:0,width:A4_W,height:A4_H});return p});
   const ctx={pages,font,bold,white:rgb(1,1,1),black:rgb(0,0,0)};
-  if(model==="trial")fillTrial(ctx,d);
-  else if(model==="eja")fillEja(ctx,d);
-  else if(model==="cancel")fillCancel(ctx,d);
-  else if(model==="trancamento")fillTrancamento(ctx,d);
-  else {
-    fillCommonPage(ctx,d,model);
-    if(model==="academy")fillAcademy(ctx,d);else fillPresential(ctx,d);
-  }
+  fillCommonPage(ctx,d,model);
+  if(model==="academy")fillAcademy(ctx,d);else fillPresential(ctx,d);
   const bytes=await out.save();
-  const number=safeFile(d.contractNumber||"");
-  const name=safeFile(d.studentName||"contrato");
-  const prefix={trial:"Termo-Acesso-Gratuito",academy:"Contrato-Academy",presencial:"Contrato-Presencial",eja:"Contrato-Intermediacao-EJA",cancel:"Termo-Rescisao",trancamento:"Aditivo-Trancamento"}[model]||"Documento-Evolua";
-  const fileName=number?`${prefix}-${number}-${name}.pdf`:`${prefix}-${name}.pdf`;
-  downloadBytes(bytes,fileName);
-}
-
-
-window.generateContractFromTemplate=generateContractFromTemplate;
-
-function fillEja(c,d){
-  const p1=c.pages[0], p2=c.pages[1], p4=c.pages[3];
-  const one={name:d.eja1Name||"", birth:d.eja1Birth||"", civil:d.eja1Civil||"", gender:(d.eja1Gender||"").slice(0,1), profession:d.eja1Profession||"", address:d.eja1Address||"", district:d.eja1District||"", cep:d.eja1Cep||"", city:d.eja1City||"", state:d.eja1State||"", email:d.eja1Email||"", rg:d.eja1Rg||"", cpf:d.eja1Cpf||"", phone:d.eja1Phone||""};
-  const two={name:d.eja2Name||"", birth:d.eja2Birth||"", civil:d.eja2Civil||"", gender:(d.eja2Gender||"").slice(0,1), profession:d.eja2Profession||"", address:d.eja2Address||"", district:d.eja2District||"", cep:d.eja2Cep||"", city:d.eja2City||"", state:d.eja2State||"", email:d.eja2Email||"", rg:d.eja2Rg||"", cpf:d.eja2Cpf||"", phone:d.eja2Phone||""};
-  const show2=d.ejaStudentCount==="2";
-
-  // O PDF original já contém exemplos preenchidos. Apagamos somente os valores,
-  // preservando banner, tabelas, bordas, rótulos e todo o texto jurídico.
-  function value(page,text,x,top,w,size=12,opt={}){
-    coverA4(page,x,top,w,opt.h||16,c);
-    if(opt.center)drawCenteredA4(page,text,x,top+1,w,size,c.bold,c);
-    else drawFittedA4(page,text,x+2,top+1,w-4,size,c.bold,c);
-  }
-  function student(page,v,y,second=false){
-    if(!second){
-      value(page,v.name,39,y+22,195,11.5);
-      value(page,brDate(v.birth),324,y+30,62,11.2);
-      value(page,v.civil,406,y+30,61,11.2,{h:17});
-      value(page,v.gender,527,y+22,35,11.5,{center:true});
-      value(page,v.profession,40,y+61,120,10.5);
-      value(page,v.address,163,y+61,276,10.5);
-      value(page,v.district,40,y+108,120,11.2);
-      value(page,v.cep,164,y+108,61,11.2);
-      value(page,v.city,236,y+108,142,11.2,{center:true});
-      value(page,v.state,378,y+93,24,11.2,{center:true});
-      value(page,v.email,406,y+103,153,9.2,{h:34});
-      value(page,v.rg,39,y+143,194,11.2);
-      value(page,v.cpf,236,y+143,141,11.2);
-      value(page,v.phone,378,y+143,181,11.2);
-    }else{
-      value(page,v.name,39,y+22,195,11.5);
-      value(page,brDate(v.birth),324,y+30,62,11.2);
-      value(page,v.civil,406,y+30,61,11.2,{h:17});
-      value(page,v.gender,527,y+22,35,11.5,{center:true});
-      value(page,v.profession,40,y+61,120,10.5);
-      value(page,v.address,163,y+61,276,10.5);
-      value(page,v.district,40,y+115,120,11.2);
-      value(page,v.cep,164,y+115,61,11.2);
-      value(page,v.city,236,y+115,142,11.2,{center:true});
-      value(page,v.state,378,y+100,24,11.2,{center:true});
-      value(page,v.email,406,y+111,153,9.2,{h:34});
-      value(page,v.rg,39,y+166,194,11.2);
-      value(page,v.cpf,236,y+166,141,11.2);
-      value(page,v.phone,378,y+166,181,11.2);
-    }
-  }
-
-  // Coordenadas medidas diretamente do modelo A4 (595 x 842).
-  student(p1,one,198,false);
-  if(show2) student(p1,two,394,true);
-  else student(p1,{name:"",birth:"",civil:"",gender:"",profession:"",address:"",district:"",cep:"",city:"",state:"",email:"",rg:"",cpf:"",phone:""},394,true);
-
-  // Instituição parceira: área exata da cláusula 3.1.
-  const pr=d.ejaProviderData||{};
-  coverA4(p2,35,319,500,92,c);
-  drawWrappedA4(p2,`RAZÃO SOCIAL: ${pr.legal||""}`,37,321,500,10.8,12.5,c.bold,c);
-  drawWrappedA4(p2,`NOME FANTASIA: ${pr.fantasy||""}`,37,347,500,10.8,12.5,c.bold,c);
-  drawWrappedA4(p2,`CNPJ: ${pr.cnpj||""}`,37,362,500,10.8,12.5,c.bold,c);
-  drawWrappedA4(p2,`ENDEREÇO: ${pr.address||""}`,37,377,500,10.3,12.0,c.font,c);
-  drawWrappedA4(p2,`CONTATO: ${pr.contact||""}`,37,400,500,10.3,12.0,c.font,c);
-
-  // Data e assinaturas: substitui somente os dados variáveis, mantendo as linhas do modelo.
-  coverA4(p4,35,229,500,20,c);
-  drawA4(p4,`Mirassol D’Oeste/MT, ${longDate(new Date())}`,37,231,12,c.font,c);
-  coverA4(p4,170,306,265,17,c);
-  drawCenteredA4(p4,"Evolua+ Profissões-Valéria Da Silva Moura",170,306,265,12,c.bold,c);
-  coverA4(p4,205,351,185,17,c);
-  drawCenteredA4(p4,one.name||"",205,351,185,12,c.bold,c);
-  coverA4(p4,205,397,185,17,c);
-  if(show2) drawCenteredA4(p4,two.name||"",205,397,185,12,c.bold,c);
-}
-
-function coverA4(page,x,top,w,h,c){
-  page.drawRectangle({x,y:A4_H-(top+h),width:w,height:h,color:c.white});
-}
-function drawA4(page,text,x,top,size,font,c){
-  page.drawText(sanitize(text),{x,y:A4_H-(top+size),size,color:c.black,font});
-}
-function drawCenteredA4(page,text,x,top,w,size,font,c){
-  const s=sanitize(text),tw=font.widthOfTextAtSize(s,size);
-  page.drawText(s,{x:x+Math.max(0,(w-tw)/2),y:A4_H-(top+size),size,color:c.black,font});
-}
-function drawFittedA4(page,text,x,top,w,size,font,c){
-  let s=sanitize(text),z=size;
-  while(z>5&&font.widthOfTextAtSize(s,z)>w)z-=.2;
-  page.drawText(s,{x,y:A4_H-(top+z),size:z,color:c.black,font});
-}
-function drawWrappedA4(page,text,x,top,w,size,lineHeight,font,c){
-  const words=sanitize(text).split(/\s+/),lines=[];let line="";
-  for(const word of words){
-    const test=line?line+" "+word:word;
-    if(font.widthOfTextAtSize(test,size)<=w) line=test;
-    else {if(line)lines.push(line);line=word;}
-  }
-  if(line)lines.push(line);
-  lines.slice(0,8).forEach((ln,i)=>drawA4(page,ln,x,top+i*lineHeight,size,font,c));
-}
-
-function fillCancel(c,d){
-  const p=c.pages[0];
-  cover(p,45,218,505,300,c);
-  const body=`Entre partes, na qualidade de CONTRATANTE, ${d.cancelName||""}, CPF: ${d.cancelCpf||""}, RG: ${d.cancelRg||""}, na qualidade de CONTRATADA, Valéria Da Silva Moura, nome fantasia “Evolua+ Profissões” sob o nº CNPJ: 44.456.212.0001-53, fica rescindido o Contrato de Prestação de Serviços sob nº matricula ${d.cancelContract||""}, firmado em ${brDate(d.cancelOriginalDate)}, nas seguintes condições:`;
-  drawWrapped(p,body,50,220,495,10.5,14,c.font,c);
-  const a=`A)    A CONTRATANTE pagará a Contratada, a importância de ${money(d.cancelFine)} (${numberWords(d.cancelFine)}), como multa contratual, com pagamento realizado em ${d.cancelPayment||""}.`;
-  drawWrapped(p,a,50,320,495,10.5,14,c.font,c);
-  const b=`B)    Após as condições aqui estabelecidas, fica valendo o presente acordo como quitação mútua, na forma do art. 1025 do Código Civil Brasileiro, ficando o contrato firmado entre as partes nulo e sem efeito.`;
-  drawWrapped(p,b,50,405,495,10.5,14,c.font,c);
-  drawCentered(p,'"DE ACORDO"',50,505,495,10.5,c.font,c);
-  cover(p,70,544,455,28,c);drawCentered(p,`Mirassol D’oeste, ${longDate(new Date())}`,70,547,455,10.2,c.font,c);
-  cover(p,80,620,220,55,c);cover(p,315,620,220,55,c);
-  drawCentered(p,d.cancelName||"",80,649,220,9,c.font,c);drawCentered(p,"Evolua+ Profissões",315,649,220,9,c.font,c);
-}
-
-function fillTrancamento(c,d){
-  const p=c.pages[0],p2=c.pages[1];
-  cover(p,55,200,500,505,c);
-  drawCentered(p,"Aditivo Contratual",55,200,500,15,c.bold,c);
-  drawCentered(p,`INSTRUMENTO PARTICULAR DE ADITAMENTO AO CONTRATO ${d.trankContract||""}`,55,242,500,9.3,c.font,c);
-  const body=`Pelo presente instrumento, como Prestadora de Serviços Valéria Da Silva Moura nome fantasia Evolua+ Profissões, e como Pagador Responsável Financeiro deste Contrato ${d.trankName||""}, ajustam o seguinte:\n\nA cláusula XIII terá a seguinte redação: “TRANCAMENTO DE MATRICULA” - O aluno poderá solicitar trancamento de sua matricula durante um período pré-definido para que não haja contabilização de faltas.\n\nMediante pedido formal por escrito, podendo retomar as atribuições da qualificação contratada dentro do período de 3 (três) meses à partir da assinatura deste contrato; A prestadora neste caso em acordo com o contratante firma que o mesmo terá uma carência de 3 meses sem efetuar pagamento, pela razão de desemprego. Após o período de 3 meses, poderá ser solicitado prorrogação deste período, com o tempo máximo de mais 09 meses, não havendo retorno sobre a ativação do contrato ou transferência, acarretará a multa de Cancelamento no valor de uma parcela sem descontos promocionais. Ressaltamos que o investimento efetuado até a petição deste trancamento se deve as aulas do curso ${d.trankCourse||""}, já assistidas e foram devidamente quitadas pelo aluno e será válido por um período de 1 ano a contar da data de assinatura deste contrato, A contratada se coloca à disposição para eventual negociação.\n\n3. Ficam ratificadas todas as demais cláusulas e condições do CONTRATO ora alterado.\n\n4. Caso o mesmo não retorne dentro do período estipulado para seu retorno, haverá atualização de valores, sendo eles Matrícula e novas Parcelas.`;
-  const lines=wrapLines(body,500,8.7,c.font);lines.slice(0,39).forEach((ln,i)=>draw(p,ln,55,273+i*10.5,8.7,c.font,c));
-  cover(p,70,690,455,24,c);drawCentered(p,`Mirassol D’Oeste, ${longDate(new Date())}`,70,693,455,8.7,c.font,c);
-  cover(p2,90,145,415,70,c);drawCentered(p2,"Evolua+ Profissões",90,173,200,9,c.font,c);drawCentered(p2,d.trankName||"",305,173,200,9,c.font,c);
-}
-
-function wrapLines(text,w,fontSize,font){const out=[];String(text).split(/\n/).forEach(par=>{if(!par.trim()){out.push("");return}const words=par.trim().split(/\s+/);let line="";for(const word of words){const t=line?line+" "+word:word;if(font.widthOfTextAtSize(t,fontSize)<=w*SX)line=t;else{if(line)out.push(line);line=word}}if(line)out.push(line)});return out}
-
-async function generateScholarshipPdf(d){
-  const {PDFDocument,StandardFonts,rgb}=PDFLib;const out=await PDFDocument.create();const p=out.addPage([A4_W,A4_H]);const font=await out.embedFont(StandardFonts.Helvetica),bold=await out.embedFont(StandardFonts.HelveticaBold);const black=rgb(0,0,0),purple=rgb(.43,.16,.85),light=rgb(.96,.94,.99);
-  const rect=(x,t,w,h,color=rgb(1,1,1))=>p.drawRectangle({x,y:A4_H-(t+h),width:w,height:h,color});const tx=(text,x,t,size,f=font)=>p.drawText(sanitize(text),{x,y:A4_H-(t+size),size,font:f,color:black});const wrap=(text,x,t,w,size,lh=12,f=font)=>wrapLines(text,w,size,f).slice(0,30).forEach((ln,i)=>tx(ln,x,t+i*lh,size,f));
-  tx("EVOLUA+ PROFISSÕES",55,55,18,bold);tx("TERMO DE COMPROMISSO DE BOLSA / CONDIÇÃO COMERCIAL",55,82,12,bold);tx("Documento para formalização da condição comercial acordada entre as partes.",55,101,8.5,font);
-  rect(55,125,485,45,light);tx(`Benefício: ${d.scholarType==="integral"?"Bolsa integral — 100%":d.scholarType==="parcial"?"Bolsa parcial":d.scholarType==="desconto"?"Desconto especial":"Condição comercial especial"}`,68,140,9,bold);tx(`Validade da condição: ${brDate(d.scholarValidity)}`,350,140,8.2,font);
-  tx("1. IDENTIFICAÇÃO",55,195,10,bold);wrap(`CONTRATANTE: ${d.scholarName||""} | CPF/CNPJ: ${d.scholarCpf||""} | RG: ${d.scholarRg||""}`,55,215,485,8.5,12);wrap(`Telefone: ${d.scholarPhone||""} | E-mail: ${d.scholarEmail||""}`,55,239,485,8.5,12);
-  tx("2. OBJETO E CONDIÇÃO COMERCIAL",55,275,10,bold);wrap(`A CONTRATADA registra, neste instrumento, a condição comercial especial concedida ao(à) CONTRATANTE para ${d.scholarService||""}, na modalidade ${d.scholarMode||"não informada"}.`,55,295,485,8.5,12);wrap(`Valor original: ${money(d.scholarOriginal)}. Benefício concedido: ${d.scholarPercent||0}%. Valor final acordado: ${money(d.scholarFinal)}.`,55,331,485,8.5,12);wrap(`Forma de pagamento: ${d.scholarPayment||""}. Quantidade: ${d.scholarInstallments||1} parcela(s) de ${money(d.scholarPart)}.`,55,355,485,8.5,12);
-  tx("3. COMPROMISSO",55,397,10,bold);wrap("A condição comercial acima será considerada a condição acordada entre as partes durante sua validade, desde que o(a) CONTRATANTE cumpra as condições de pagamento e demais obrigações aplicáveis ao serviço contratado. A presente declaração não substitui o contrato principal, matrícula ou instrumento específico que venha a formalizar a prestação do serviço.",55,417,485,8.5,12);
-  tx("4. DISPOSIÇÕES FINAIS",55,495,10,bold);wrap(`O(a) CONTRATANTE declara ter ciência dos valores e condições registrados neste documento. ${d.scholarNotes||""}`,55,515,485,8.5,12);wrap(`Firmado em Mirassol D’Oeste/MT, ${longDate(localDate(d.scholarDate)||new Date())}.`,55,567,485,8.5,12);
-  tx("__________________________________",80,625,9,font);tx("__________________________________",325,625,9,font);tx(d.scholarName||"CONTRATANTE",80,642,8.5,font);tx("Valéria Da Silva Moura — Evolua+ Profissões",325,642,8.2,font);tx("CNPJ 44.456.212/0001-53",325,657,7.5,font);
-  const bytes=await out.save();downloadBytes(bytes,`Termo-Compromisso-Bolsa-${safeFile(d.scholarName||"cliente")}.pdf`);
-}
-
-function fillTrial(c,d){
-  const p=c.pages[0];
-  const TW=595.304,TH=841.89;
-  const coverT=(x,top,w,h)=>p.drawRectangle({x,y:TH-(top+h),width:w,height:h,color:c.white});
-  const drawT=(text,x,top,size,font=c.font)=>{const s=sanitize(text);p.drawText(s,{x,y:TH-(top+size),size,font,color:c.black})};
-  const fittedT=(text,x,top,w,size)=>{let s=sanitize(text),z=size;while(z>5&&c.font.widthOfTextAtSize(s,z)>w)z-=.25;drawT(s,x,top,z)};
-  const centeredT=(text,x,top,w,size)=>{const s=sanitize(text),tw=c.font.widthOfTextAtSize(s,size);drawT(s,x+Math.max(0,(w-tw)/2),top,size)};
-  const date=brDate(d.activationDate),end=brDate(d.trialEndDate);
-  coverT(98,297,274,18); fittedT(d.studentName||"",101,300,268,9.2);
-  coverT(415,297,118,18); fittedT(d.studentCpf||"",418,300,112,9.2);
-  coverT(90,318,279,18); fittedT(d.studentEmail||"",93,321,273,8.8);
-  coverT(415,318,118,18); fittedT(d.studentPhone||"",418,321,112,9.2);
-  coverT(127,345,83,15); centeredT(date,127,347,83,9.2);
-  coverT(379,353,84,15); centeredT(end,379,355,84,9.2);
+  const number=safeFile(d.contractNumber||"sem-numero"),name=safeFile(d.studentName||"contrato");
+  downloadBytes(bytes,`Contrato-${number}-${model==="academy"?"Academy":"Presencial"}-${name}.pdf`);
 }
 
 function fillCommonPage(c,d,model){
@@ -248,7 +80,7 @@ function fillAcademy(c,d){
 }
 
 function fillPresential(c,d){
-  const p2=c.pages[1],total=(+d.courseValue||0)+(+d.enrollmentValue||0),n=Math.min(17,Math.max(1,+d.installments||1)),dates=dueDates(d.firstDue,n,+d.dueDay||10),part=total/n;
+  const p2=c.pages[1],n=Math.min(17,Math.max(1,+d.installments||1)),part=+d.courseValue||0,total=part*n+(+d.enrollmentValue||0),dates=dueDates(d.firstDue,n,+d.dueDay||10);
   field(p2,money(d.courseValue),61,63,101,28,7.2,c);
   field(p2,d.paymentMethod,163,63,61,28,6.2,c,{align:"center",multiline:true});
   field(p2,money(d.enrollmentValue),226,63,72,28,7.1,c,{align:"center"});
