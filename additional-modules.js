@@ -56,6 +56,19 @@
     const title=t=>{wrap(t,15,true);y-=5;line();};
     const kv=(label,value)=>{wrap(`${label}: ${value||'________________________________'}`,10,false);};
     const signLine=(name)=>{y-=28;if(y<95)newPage();page.drawLine({start:{x:margin+18,y},end:{x:W-margin-18,y},thickness:.8,color:rgb(.1,.1,.1)});y-=17;wrap(name,9,true);};
+    // Papel timbrado Evolua+ Academy somente nos termos de trancamento e cancelamento.
+    if(kind==='trancamento'||kind==='cancelamento'){
+      const response=await fetch('assets/banner-academy.png');
+      if(!response.ok)throw new Error('Não foi possível carregar assets/banner-academy.png');
+      const bannerBytes=await response.arrayBuffer();
+      const banner=await pdf.embedPng(bannerBytes);
+      const bannerWidth=W-margin*2;
+      const bannerHeight=banner.height*(bannerWidth/banner.width);
+      page.drawImage(banner,{x:margin,y:H-28-bannerHeight,width:bannerWidth,height:bannerHeight});
+      y=H-28-bannerHeight-24;
+      page.drawLine({start:{x:margin,y},end:{x:W-margin,y},thickness:1,color:rgb(.48,.18,.75)});
+      y-=24;
+    }
     const institution=institutions[d.institution||'mt'];
     if(kind==='trancamento'){
       title('ADITIVO CONTRATUAL | TERMO DE TRANCAMENTO');wrap('Pelo presente instrumento, a Evolua+ Profissões, representada por Valéria da Silva Moura, e o(a) aluno(a) abaixo identificado(a), registram a solicitação de trancamento relacionada ao contrato informado.',10);y-=8;
