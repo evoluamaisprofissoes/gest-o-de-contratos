@@ -65,7 +65,7 @@ function init(){
  Object.keys(COURSES).forEach(v=>$("#courseName").add(new Option(v,v)));
  Object.keys(PLANS).forEach(v=>$("#planName").add(new Option(v,v)));
  setDefaults();applyCourse();applyPlan();updateSummary();
- $$(".model-card").forEach(b=>b.onclick=()=>openForm(b.dataset.model));
+ $$(".model-card[data-model]").forEach(b=>b.onclick=()=>openForm(b.dataset.model));
  $("#backButton").onclick=()=>currentStep===1?showHome():goStep(currentStep-1);
  $("#homeButton").onclick=showHome;$("#nextStep").onclick=()=>validateStep()&&goStep(currentStep+1);$("#prevStep").onclick=()=>goStep(currentStep-1);
  $("#samePayer").onchange=togglePayer;$("#courseName").onchange=applyCourse;$("#planName").onchange=applyPlan;

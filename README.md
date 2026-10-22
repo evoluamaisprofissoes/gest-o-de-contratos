@@ -38,3 +38,13 @@ No contrato Academy, informe o valor total do contrato e a quantidade de parcela
 No contrato presencial, informe o valor de cada parcela, a quantidade de parcelas e a matrícula. O total é calculado como `valor da parcela × quantidade de parcelas + matrícula`, e os mesmos valores são usados no resumo e no PDF.
 
 Antes de utilizar contratos reais, confira o conteúdo jurídico, os valores, os cursos e os módulos cadastrados.
+
+## Módulos adicionais (outubro de 2026)
+
+Foram adicionadas quatro opções sem substituir os modelos de contrato existentes:
+- Termo de Trancamento;
+- Termo de Cancelamento;
+- Ficha de Matrícula Provão MT-Cursos, com inserção local de imagem da assinatura;
+- Termo de Compromisso Provão, com seleção de MT-Cursos ou CEC.
+
+Os módulos adicionais geram PDFs no navegador e não enviam nem armazenam os dados em servidor. Antes de usar documentos de trancamento, cancelamento ou compromisso com alunos reais, revise os textos e condições com o responsável jurídico/administrativo da instituição.

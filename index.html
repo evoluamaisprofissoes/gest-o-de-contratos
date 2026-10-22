@@ -48,6 +48,10 @@
           </div>
           <b>Começar <span>→</span></b>
         </button>
+        <button class="model-card add-on-card" type="button" data-addon="trancamento"><div class="card-icon">⏸️</div><div><span class="tag">ADITIVO CONTRATUAL</span><h2>Termo de Trancamento</h2><p>Formalize o trancamento e as condições de retorno do aluno.</p></div><b>Começar <span>→</span></b></button>
+        <button class="model-card add-on-card" type="button" data-addon="cancelamento"><div class="card-icon">📄</div><div><span class="tag">RESCISÃO</span><h2>Termo de Cancelamento</h2><p>Registre o encerramento do contrato e as condições acordadas.</p></div><b>Começar <span>→</span></b></button>
+        <button class="model-card add-on-card" type="button" data-addon="ficha"><div class="card-icon">📝</div><div><span class="tag">PROVÃO MT-CURSOS</span><h2>Ficha de Matrícula</h2><p>Preencha a ficha e anexe a foto da assinatura do aluno.</p></div><b>Começar <span>→</span></b></button>
+        <button class="model-card add-on-card" type="button" data-addon="compromisso"><div class="card-icon">✍️</div><div><span class="tag">PROVÃO</span><h2>Termo de Compromisso</h2><p>Selecione CEC ou MT-Cursos e gere o PDF para assinatura digital.</p></div><b>Começar <span>→</span></b></button>
       </div>
       <div class="steps-row">
         <span><b>1</b> Escolha o modelo</span>
@@ -157,6 +161,11 @@
         </div>
       </form>
     </section>
+
+    <section class="screen" id="addonScreen">
+      <div class="form-heading addon-heading"><button class="back-button" id="addonBack" type="button">← Voltar ao início</button><div><span class="eyebrow">DOCUMENTO ADICIONAL</span><h1 id="addonTitle">Novo documento</h1></div><div></div></div>
+      <form id="addonForm" novalidate><div id="addonFields" class="addon-fields"></div><div class="form-actions addon-actions"><button class="secondary" type="button" id="addonCancel">Cancelar</button><button class="primary" type="submit" id="addonGenerate">Gerar PDF ↓</button></div></form>
+    </section>
   </main>
 
   <div class="toast" id="toast" role="status"></div>
@@ -164,5 +173,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js" referrerpolicy="no-referrer"></script>
   <script src="template-pdf.js"></script>
   <script src="app.js"></script>
+  <script src="additional-modules.js"></script>
 </body>
 </html>
