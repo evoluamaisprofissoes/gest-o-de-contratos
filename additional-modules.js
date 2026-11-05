@@ -719,7 +719,7 @@
         const h=16;
         let x=36;
 
-        rect(36,yy-h,523,h);
+        rect(36,yy-h,535,h);
 
         for(const [idx,w] of row){
           const checked=selectedDocs.has(docLabels[idx]);
@@ -770,11 +770,39 @@
         fy-=13.5;
       }
 
+      // CORREÇÃO: Ensino Médio com quebra automática de linha.
+      // Isso evita a sobreposição das opções mais compridas.
       let my=courseTop-29;
 
+      function drawWrappedOption(text,x,startY,maxWidth,size=6.15,lineHeight=8.5){
+        const words=String(text).split(/\s+/);
+        const lines=[];
+        let currentLine='';
+
+        for(const word of words){
+          const test=currentLine ? currentLine+' '+word : word;
+
+          if(bold.widthOfTextAtSize(test,size)>maxWidth){
+            if(currentLine) lines.push(currentLine);
+            currentLine=word;
+          }else{
+            currentLine=test;
+          }
+        }
+
+        if(currentLine) lines.push(currentLine);
+
+        for(const lineText of lines){
+          t(lineText,x,startY,size,true,ink,maxWidth);
+          startY-=lineHeight;
+        }
+
+        return startY-2.5;
+      }
+
       for(const item of medio){
-        t((selectedLevels.has(item)?'( X ) ':'(   ) ')+item,385,my,6.15,true,ink,170);
-        my-=13.5;
+        const marker=selectedLevels.has(item)?'( X ) ':'(   ) ';
+        my=drawWrappedOption(marker+item,385,my,170,6.15,8.5);
       }
 
       // DISCIPLINAS
